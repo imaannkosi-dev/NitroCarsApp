@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NitroCars — Driver Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --basalt-950:#131010;
+    --basalt-900:#1a1614;
+    --basalt-800:#241f1b;
+    --basalt-700:#332b25;
+    --basalt-600:#463b32;
+    --clay-600:#96491f;
+    --clay-500:#b5602c;
+    --clay-400:#cc7942;
+    --clay-300:#d99a6a;
+    --verdigris-500:#3f8f77;
+    --verdigris-400:#4fa88d;
+    --verdigris-200:#a9d6c8;
+    --ember-500:#dda23a;
+    --ember-300:#ecc584;
+    --redclay-500:#a8452f;
+    --redclay-300:#d98a72;
+    --bone-100:#f0e8da;
+    --bone-200:#e2d8c6;
+    --bone-300:#c7bba7;
+    --bone-500:#948872;
+    --font-display:'Fraunces', serif;
+    --font-body:'Manrope', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--basalt-950);
+    color:var(--bone-100);
+    font-family:var(--font-body);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--clay-500);color:var(--basalt-950);}
+
+  /* ---------- layout shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:232px 1fr;
+    min-height:100vh;
+  }
+  @media (max-width:880px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{position:fixed; z-index:40; transform:translateX(-100%); transition:transform .35s ease; height:100vh;}
+    .sidebar.open{transform:translateX(0);}
+    .menu-toggle{display:flex !important;}
+  }
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    background:
+      linear-gradient(180deg, var(--basalt-900), var(--basalt-950) 60%);
+    border-right:1px solid var(--basalt-700);
+    padding:26px 18px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+  }
+  .brandmark{display:flex; align-items:center; gap:11px; padding:0 4px;}
+  .brandmark svg{flex-shrink:0;}
+  .brand-word{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20.5px;
+    letter-spacing:.2px;
+    color:var(--bone-100);
+    line-height:1;
+  }
+  .brand-sub{
+    font-size:10.5px;
+    color:var(--bone-500);
+    letter-spacing:.4px;
+    margin-top:3px;
+  }
+
+  .nav-group-label{
+    font-size:11px;
+    color:var(--bone-500);
+    padding:0 10px;
+    margin-bottom:2px;
+  }
+  nav{display:flex; flex-direction:column; gap:5px;}
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 12px;
+    border-radius:2px;
+    background:transparent;
+    border:1px solid transparent;
+    color:var(--bone-300);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14.5px;
+    cursor:pointer;
+    text-align:left;
+    transition:background .15s ease, border-color .15s ease, color .15s ease;
+    position:relative;
+  }
+  .nav-item svg{flex-shrink:0; opacity:.85;}
+  .nav-item:hover{background:var(--basalt-800); color:var(--bone-100);}
+  .nav-item.active{
+    background:var(--basalt-800);
+    border-color:var(--basalt-600);
+    color:var(--bone-100);
+  }
+  .nav-item.active::before{
+    content:"";
+    position:absolute; left:-18px; top:8px; bottom:8px; width:3px;
+    background:var(--clay-500);
+  }
+  .nav-item .badge{
+    margin-left:auto;
+    font-size:10.5px;
+    background:var(--redclay-500);
+    color:var(--bone-100);
+    padding:2px 6px;
+    border-radius:2px;
+    font-weight:700;
+  }
+
+  .sidebar-foot{margin-top:auto; display:flex; flex-direction:column; gap:12px;}
+  .sne-launcher{
+    display:flex; align-items:center; gap:11px;
+    padding:12px;
+    background:linear-gradient(135deg, var(--basalt-800), var(--basalt-900));
+    border:1px solid var(--basalt-600);
+    cursor:pointer;
+    clip-path:polygon(0 10px, 10px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .sne-launcher:hover{border-color:var(--clay-500);}
+  .sne-disc{
+    width:34px; height:34px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--verdigris-200), var(--verdigris-500) 60%, var(--verdigris-500));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; color:var(--basalt-950); font-size:15px;
+    flex-shrink:0;
+  }
+  .sne-launcher-text{line-height:1.25;}
+  .sne-launcher-text b{display:block; font-size:13.5px; color:var(--bone-100);}
+  .sne-launcher-text span{font-size:11px; color:var(--bone-500);}
+
+  .driver-chip{
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px;
+    border-top:1px solid var(--basalt-700);
+    padding-top:14px;
+  }
+  .driver-avatar{
+    width:28px; height:28px; border-radius:50%;
+    background:var(--basalt-700);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11.5px; font-weight:700; color:var(--bone-200);
+  }
+  .driver-chip .who{font-size:12.5px; color:var(--bone-300); line-height:1.3;}
+  .driver-chip .who b{color:var(--bone-100); display:block; font-size:13px;}
+
+  /* ---------- main ---------- */
+  main{padding:26px 34px 60px; max-width:1180px; width:100%;}
+  .topbar{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:20px; margin-bottom:26px; flex-wrap:wrap;
+  }
+  .menu-toggle{
+    display:none; width:38px; height:38px; border:1px solid var(--basalt-600);
+    background:var(--basalt-900); align-items:center; justify-content:center;
+    margin-bottom:14px; cursor:pointer;
+  }
+  .greeting-eyebrow{font-size:12.5px; color:var(--clay-400); font-weight:700; margin-bottom:6px;}
+  h1.greeting{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:33px;
+    margin:0;
+    color:var(--bone-100);
+    letter-spacing:.2px;
+  }
+  .greeting-sub{color:var(--bone-500); font-size:14px; margin-top:6px;}
+
+  .weather-controls{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .pillgroup{display:flex; gap:6px; background:var(--basalt-900); border:1px solid var(--basalt-700); padding:4px; border-radius:2px;}
+  .pillgroup button{
+    background:transparent; border:none; color:var(--bone-500);
+    font-family:var(--font-body); font-weight:600; font-size:12.5px;
+    padding:7px 11px; cursor:pointer; border-radius:1px;
+  }
+  .pillgroup button.active{background:var(--basalt-700); color:var(--bone-100);}
+  .pillgroup button:hover:not(.active){color:var(--bone-200);}
+
+  /* ---------- home view ---------- */
+  .grid-row{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:20px;}
+  @media (max-width:980px){.grid-row{grid-template-columns:1fr;}}
+
+  .megalith{
+    background:var(--basalt-900);
+    border:1px solid var(--basalt-700);
+    clip-path:polygon(0 16px, 16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding:22px 24px;
+  }
+  .megalith h2{
+    font-family:var(--font-display); font-weight:600; font-size:17px;
+    margin:0 0 4px; color:var(--bone-100);
+  }
+  .megalith .h-sub{font-size:12.5px; color:var(--bone-500); margin-bottom:16px;}
+
+  /* traffic sundial */
+  .sundial-wrap{display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
+  .sundial{position:relative; width:172px; height:172px; flex-shrink:0;}
+  .station-list{flex:1; min-width:220px; display:flex; flex-direction:column; gap:10px;}
+  .station-row{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 11px;
+    background:var(--basalt-800);
+    border:1px solid var(--basalt-700);
+  }
+  .load-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .station-row .name{font-size:13.5px; font-weight:600; color:var(--bone-100); flex:1;}
+  .station-row .lvl{font-size:11.5px; color:var(--bone-500); font-weight:700;}
+
+  .stat-trio{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .stat-block{padding:14px 0; border-top:1px solid var(--basalt-700);}
+  .stat-block .num{font-family:var(--font-display); font-size:28px; font-weight:600; color:var(--bone-100); line-height:1;}
+  .stat-block .lbl{font-size:12px; color:var(--bone-500); margin-top:6px;}
+
+  .session-card{display:flex; flex-direction:column; gap:14px;}
+  .session-empty{
+    display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+    padding:18px 0 4px;
+  }
+  .session-empty p{margin:0; color:var(--bone-300); font-size:13.5px; line-height:1.5; max-width:34ch;}
+
+  .btn{
+    font-family:var(--font-body); font-weight:700; font-size:13px;
+    padding:10px 18px; cursor:pointer; border:none;
+    color:var(--basalt-950);
+    background:var(--clay-500);
+    clip-path:polygon(0 8px, 8px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .btn:hover{background:var(--clay-400);}
+  .btn.secondary{background:transparent; color:var(--bone-100); border:1px solid var(--basalt-600);}
+  .btn.secondary:hover{border-color:var(--clay-500);}
+  .btn.danger{background:var(--redclay-500); color:var(--bone-100);}
+  .btn.danger:hover{background:#bd5138;}
+  .btn.ghost{background:transparent; color:var(--verdigris-400); border:1px solid var(--verdigris-500); padding:8px 14px; font-size:12.5px;}
+
+  .problem-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+  @media (max-width:980px){.problem-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:560px){.problem-grid{grid-template-columns:1fr;}}
+  .problem-card{
+    background:var(--basalt-900); border:1px solid var(--basalt-700);
+    padding:18px 16px; cursor:pointer;
+    clip-path:polygon(0 12px, 12px 0, 100% 0, 100% 100%, 0 100%);
+    transition:border-color .15s ease, transform .15s ease;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .problem-card:hover{border-color:var(--clay-500); transform:translateY(-2px);}
+  .problem-card .icon-disc{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--basalt-800); border:1px solid var(--basalt-700);
+  }
+  .problem-card b{font-size:14px; color:var(--bone-100); font-weight:700;}
+  .problem-card span{font-size:12px; color:var(--bone-500); line-height:1.4;}
+
+  /* ---------- chat view ---------- */
+  #chatView{display:none;}
+  .chat-shell{
+    background:var(--basalt-900); border:1px solid var(--basalt-700);
+    display:flex; flex-direction:column;
+    height:calc(100vh - 160px);
+    min-height:460px;
+    clip-path:polygon(0 18px, 18px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .chat-head{
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--basalt-700);
+  }
+  .chat-back{
+    background:none; border:1px solid var(--basalt-600); color:var(--bone-300);
+    width:32px; height:32px; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .chat-back:hover{border-color:var(--clay-500); color:var(--bone-100);}
+  .chat-head-text b{display:block; font-size:15px; color:var(--bone-100); font-family:var(--font-display); font-weight:600;}
+  .chat-head-text span{font-size:11.5px; color:var(--bone-500);}
+  .chat-head .sne-disc{margin-left:auto;}
+
+  .chat-body{
+    flex:1; overflow-y:auto; padding:22px 24px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .msg{display:flex; gap:10px; max-width:78%; animation:rise .28s ease;}
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .msg.sne{align-self:flex-start;}
+  .msg.user{align-self:flex-end; flex-direction:row-reverse; margin-left:auto;}
+  .msg .avatar{width:26px; height:26px; border-radius:50%; flex-shrink:0; margin-top:2px;}
+  .msg.sne .avatar{background:radial-gradient(circle at 32% 28%, var(--verdigris-200), var(--verdigris-500) 60%);}
+  .msg.user .avatar{background:var(--basalt-700);}
+  .bubble{
+    padding:13px 22px; font-size:13.8px; line-height:1.55;
+  }
+  .msg.sne .bubble{
+    background:linear-gradient(180deg, #cfe0da 0%, #92b0a4 16%, #4c6b60 44%, #223129 60%, #587368 80%, #cfe0da 100%);
+    color:#f4f8f6;
+    text-shadow:0 1px 2px rgba(0,0,0,.55);
+    border:1px solid #17211d;
+    border-radius:999px;
+    box-shadow:0 8px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -3px 7px rgba(0,0,0,.5);
+    position:relative;
+  }
+  .msg.user .bubble{
+    background:linear-gradient(180deg, #f4d3ab 0%, #dea262 16%, #a5602c 44%, #522c13 60%, #b5702f 80%, #f4d3ab 100%);
+    color:#2a1305;
+    font-weight:700;
+    text-shadow:0 1px 0 rgba(255,255,255,.3);
+    border:1px solid #3a1c09;
+    border-radius:999px;
+    box-shadow:0 8px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -3px 7px rgba(0,0,0,.45);
+    position:relative;
+  }
+  .msg .bubble::after{
+    content:"";
+    position:absolute; left:16px; right:16px; top:4px; height:2px;
+    background:rgba(255,255,255,.55); border-radius:2px;
+  }
+  .bubble .ref{display:block; margin-top:8px; font-size:11.5px; font-weight:700;}
+  .msg.sne .bubble .ref{color:#e3f4ec;}
+  .msg.user .bubble .ref{color:#3a1c09;}
+  a.chip{text-decoration:none; display:inline-flex; align-items:center;}
+
+  .typing .bubble{display:flex; gap:4px; align-items:center; padding:13px 16px;}
+  .typing .dot{width:6px; height:6px; border-radius:50%; background:var(--bone-500); animation:blink 1.1s infinite;}
+  .typing .dot:nth-child(2){animation-delay:.15s;}
+  .typing .dot:nth-child(3){animation-delay:.3s;}
+  @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px 36px;}
+  .chip{
+    background:var(--basalt-800); border:1px solid var(--basalt-600); color:var(--bone-100);
+    font-family:var(--font-body); font-weight:600; font-size:12.8px;
+    padding:8px 13px; cursor:pointer;
+    clip-path:polygon(0 6px, 6px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .chip:hover{border-color:var(--clay-500); background:var(--basalt-700);}
+  .chip.warn{border-color:var(--redclay-500); color:var(--redclay-300);}
+  .chip.warn:hover{background:rgba(168,69,47,.15);}
+  .chip[disabled]{opacity:.4; cursor:default;}
+
+  .action-row{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px 36px;}
+
+  .chat-foot{
+    border-top:1px solid var(--basalt-700); padding:14px 18px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .chat-foot input{
+    flex:1; background:var(--basalt-800); border:1px solid var(--basalt-700);
+    color:var(--bone-100); font-family:var(--font-body); font-size:13.5px;
+    padding:11px 13px; outline:none;
+  }
+  .chat-foot input:focus{border-color:var(--clay-500);}
+  .chat-foot input::placeholder{color:var(--bone-500);}
+  .send-btn{
+    width:40px; height:40px; background:var(--clay-500); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .send-btn:hover{background:var(--clay-400);}
+
+  /* mini forecast card injected into chat */
+  .forecast-mini{
+    margin:2px 0 4px 36px; background:var(--basalt-800); border:1px solid var(--basalt-700);
+    padding:14px 16px; max-width:340px;
+  }
+  .forecast-mini .fm-row{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--basalt-700); font-size:12.8px;}
+  .forecast-mini .fm-row:last-child{border-bottom:none;}
+  .forecast-mini .fm-row .name{flex:1; color:var(--bone-100); font-weight:600;}
+  .forecast-mini .fm-row .pct{color:var(--bone-500); font-weight:700; font-size:11.5px;}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-track{background:var(--basalt-900);}
+  ::-webkit-scrollbar-thumb{background:var(--basalt-600);}
+  a{color:var(--verdigris-400);}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brandmark">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <path d="M17 2 L30 11 L26 32 L8 32 L4 11 Z" fill="#241f1b" stroke="#463b32"/>
+        <path d="M19 8 L11 18 H16 L14 26 L23 15 H18 Z" fill="#dda23a"/>
+      </svg>
+      <div>
+        <div class="brand-word">NitroCars</div>
+        <div class="brand-sub">DRIVER CONSOLE</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="nav-group-label">Console</div>
+      <nav>
+        <button class="nav-item active" data-tab="home" onclick="selectTab('home')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11 L12 4 L20 11 V20 H4 Z"/><path d="M10 20 V14 H14 V20"/></svg>
+          Overview
+        </button>
+      </nav>
+    </div>
+
+    <div>
+      <div class="nav-group-label">What's the problem?</div>
+      <nav>
+        <button class="nav-item" data-tab="charging" onclick="selectTab('charging')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4 H20 V16 H4 Z"/><path d="M13 8 L9 13 H12 L11 17 L15 12 H12 Z" fill="currentColor" stroke="none"/></svg>
+          Charging
+        </button>
+        <button class="nav-item" data-tab="payment" onclick="selectTab('payment')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8 V16 M9.5 10 a2.5 2 0 0 1 5 0 c0 2 -5 1.5 -5 3.5 a2.5 2 0 0 0 5 0"/></svg>
+          Payment
+        </button>
+        <button class="nav-item" data-tab="route" onclick="selectTab('route')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M15 9 L12.8 12.8 L9 15 L11.2 11.2 Z" fill="currentColor" stroke="none"/></svg>
+          Route &amp; Stations
+        </button>
+        <button class="nav-item" data-tab="vehicle" onclick="selectTab('vehicle')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 L19 6.5 V12 C19 17 15.8 20 12 21.5 C8.2 20 5 17 5 12 V6.5 Z"/></svg>
+          Vehicle &amp; Account
+        </button>
+        <button class="nav-item" data-tab="emergency" onclick="selectTab('emergency')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 L21 20 H3 Z"/><path d="M12 9.5 V14.5 M12 17 V17.3"/></svg>
+          Emergency
+          <span class="badge">SOS</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="sne-launcher" onclick="selectTab(currentTab==='home' ? 'charging' : currentTab)">
+        <div class="sne-disc">S</div>
+        <div class="sne-launcher-text">
+          <b>Talk to Sné</b>
+          <span>Your charging assistant</span>
+        </div>
+      </div>
+      <div class="driver-chip">
+        <div class="driver-avatar">TM</div>
+        <div class="who"><b>Thabo M.</b>Model 3 · NC-88214</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+    <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e2d8c6" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <!-- ---------- HOME VIEW ---------- -->
+    <div id="homeView">
+      <div class="topbar">
+        <div>
+          <div class="greeting-eyebrow" id="dateLine">—</div>
+          <h1 class="greeting" id="greetLine">Good day, Thabo</h1>
+          <div class="greeting-sub">Here's how the network looks right now.</div>
+        </div>
+      </div>
+
+      <div class="problem-grid" id="problemGrid"></div>
+
+      <div class="grid-row">
+        <div class="megalith">
+          <h2>Station traffic forecast</h2>
+          <div class="h-sub">Congestion modelled from current time-of-day and weather conditions.</div>
+
+          <div class="weather-controls" style="margin-bottom:16px;">
+            <div class="pillgroup" id="timePills"></div>
+            <div class="pillgroup" id="weatherPills"></div>
+          </div>
+
+          <div class="sundial-wrap">
+            <div class="sundial" id="sundialSvgWrap"></div>
+            <div class="station-list" id="stationListHome"></div>
+          </div>
+        </div>
+
+        <div class="megalith session-card">
+          <h2>Active session</h2>
+          <div class="h-sub">No vehicle currently connected.</div>
+          <div class="session-empty">
+            <p>Plug in at any NitroCars bay and your session will appear here automatically — live kWh, cost, and time to full.</p>
+            <button class="btn" onclick="selectTab('route')">Find a nearby station</button>
+          </div>
+          <div class="stat-trio">
+            <div class="stat-block"><div class="num">312</div><div class="lbl">kWh this month</div></div>
+            <div class="stat-block"><div class="num">R684</div><div class="lbl">spent this month</div></div>
+            <div class="stat-block"><div class="num">41kg</div><div class="lbl">CO₂ offset</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- CHAT VIEW ---------- -->
+    <div id="chatView">
+      <div class="chat-shell">
+        <div class="chat-head">
+          <button class="chat-back" onclick="selectTab('home')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4 L7 12 L15 20"/></svg>
+          </button>
+          <div class="chat-head-text">
+            <b id="chatTitle">Charging</b>
+            <span id="chatSub">Talking with Sné</span>
+          </div>
+          <div class="sne-disc">S</div>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-foot">
+          <input id="chatInput" type="text" placeholder="Type a charger ID, station name, or message…" onkeydown="if(event.key==='Enter')sendFreeText()">
+          <button class="send-btn" onclick="sendFreeText()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#131010" stroke-width="2"><path d="M4 12 L20 4 L14 20 L11 13 Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const STATIONS = [
+  { name:"Monolith Junction", base:0.35, time:{Morning:.35,Afternoon:.55,Evening:.85,Night:.15}, weather:{Clear:0,Rain:.15,Storm:.3,Heatwave:.2} },
+  { name:"Obsidian Row",      base:0.5,  time:{Morning:.6,Afternoon:.5,Evening:.6,Night:.2},  weather:{Clear:0,Rain:.1,Storm:.2,Heatwave:.35} },
+  { name:"Ember Basin",       base:0.25, time:{Morning:.2,Afternoon:.4,Evening:.7,Night:.1},  weather:{Clear:0,Rain:.25,Storm:.4,Heatwave:.15} },
+  { name:"Sundial Terminal",  base:0.4,  time:{Morning:.75,Afternoon:.45,Evening:.4,Night:.1}, weather:{Clear:0,Rain:.05,Storm:.15,Heatwave:.1} },
+  { name:"Verdigris Yard",    base:0.3,  time:{Morning:.3,Afternoon:.35,Evening:.5,Night:.05}, weather:{Clear:0,Rain:.2,Storm:.3,Heatwave:.4} },
+  { name:"Basalt Crossing",   base:0.45, time:{Morning:.5,Afternoon:.65,Evening:.9,Night:.25}, weather:{Clear:0,Rain:.15,Storm:.25,Heatwave:.2} },
+];
+const TIMES = ["Morning","Afternoon","Evening","Night"];
+const WEATHERS = ["Clear","Rain","Storm","Heatwave"];
+
+let state = { time:"Afternoon", weather:"Clear" };
+const hr = new Date().getHours();
+state.time = hr<11 ? "Morning" : hr<17 ? "Afternoon" : hr<21 ? "Evening" : "Night";
+
+function congestion(st, time, weather){
+  const val = st.base*0.3 + (st.time[time]||0)*0.5 + (st.weather[weather]||0)*0.2;
+  return Math.max(0, Math.min(1, val));
+}
+function levelInfo(v){
+  if(v < .4) return {label:"Light", color:"var(--verdigris-400)"};
+  if(v < .7) return {label:"Moderate", color:"var(--ember-500)"};
+  return {label:"Heavy", color:"var(--redclay-500)"};
+}
+function rankedStations(time, weather){
+  return STATIONS.map(s=>({...s, load:congestion(s,time,weather)})).sort((a,b)=>b.load-a.load);
+}
+
+/* ============================================================
+   PROBLEM TABS CONFIG
+   ============================================================ */
+const TAB_META = {
+  charging:{ label:"Charging", sub:"Session & hardware issues", icon:"⚡" },
+  payment:{ label:"Payment", sub:"Billing & transactions", icon:"◑" },
+  route:{ label:"Route & Stations", sub:"Finding & reaching a bay", icon:"◈" },
+  vehicle:{ label:"Vehicle & Account", sub:"Profile, plan & login", icon:"◇" },
+  emergency:{ label:"Emergency", sub:"Roadside & safety", icon:"▲" },
+};
+
+const TAB_CONFIG = {
+  charging:{
+    issues:["Slow charging","Charger locked in car","Charging won't start","Connector won't release","Other"],
+    handle(issue){
+      if(issue==="Slow charging"){
+        sneSay("That can happen with a cold battery, a shared bay splitting power with a neighbouring car, or a worn cable. I'm pulling live diagnostics on your bay now.", true);
+        setTimeout(()=>{
+          sneSay("Diagnostics show your session is running at 68% of rated output — most likely shared load. I can move your reservation to a dedicated bay nearby.");
+          actionChips([
+            {label:"Move me to a free bay", fn:()=>{ sneSay("Done — Ember Basin, bay 4 is holding a dedicated 150kW line for you for the next 15 minutes."); }},
+            {label:"Keep current bay", fn:()=>{ sneSay("Understood, I'll leave the session as is. It should still finish, just a little slower."); }},
+          ]);
+        },1000);
+      } else if(issue==="Charger locked in car"){
+        sneSay("That's usually the connector's safety latch holding because the car still thinks it's charging. I can send a manual release signal to the connector.", true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Send release signal", fn:()=>{
+              sneSay("Signal sent. Give it about 10 seconds, then try the release button on the handle again.");
+              setTimeout(()=>sneSay("Let me know if it's still stuck and I'll flag a technician to the bay."),900);
+            }},
+            {label:"It's still stuck", fn:()=>{ sneSay("Noted — I've flagged bay support. A technician will reach the station within 20 minutes. You'll get an SMS when they arrive."); }},
+          ]);
+        },900);
+      } else if(issue==="Charging won't start"){
+        sneSay("Let's narrow it down — is the cable fully seated and the app showing your session as authorised?", true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Cable is seated, still nothing", fn:()=>{ sneSay("I've restarted the connector remotely from our side — this usually resolves an authorisation mismatch. Try plugging in again now."); }},
+            {label:"Not sure how to check", fn:()=>{ sneSay("No problem — unplug fully, wait 5 seconds, reconnect, and make sure the app shows a green 'session active' banner before you walk away."); }},
+          ]);
+        },900);
+      } else if(issue==="Connector won't release"){
+        sneSay("Got it — for safety, connectors lock until the session closes cleanly. I'll force-close the session from here.", true);
+        setTimeout(()=>{
+          sneSay("Session force-closed. The connector should unlock now — you won't be charged for any time after the fault occurred.");
+        },900);
+      } else {
+        askFreeform("Tell me a bit more about what's happening with your charge, and I'll get it sorted.");
+      }
+    }
+  },
+  payment:{
+    issues:["Card failure","App spinning","Billing error","Other"],
+    handle(issue){
+      if(issue==="Card failure"){
+        sneSay("Sorry about that. It's usually one of three things: the card's expired, the bank's declining a new merchant, or there's a temporary hold from a prior session.", true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Try a different card", fn:()=>{ sneSay("Opening your payment methods — add a card and I'll retry the charge immediately."); }},
+            {label:"Retry the same card", fn:()=>{ sneSay("Retrying now… your bank approved it this time. You're all set."); }},
+          ]);
+        },900);
+      } else if(issue==="App spinning"){
+        sneSay("That's usually a stalled session sync rather than a real charge. I'll refresh your session from our servers.", true);
+        setTimeout(()=>{
+          sneSay("Refreshed — force-close the app and reopen it, and the spinner should clear. If it doesn't, come back here and I'll escalate it as a technical fault.");
+        },900);
+      } else if(issue==="Billing error"){
+        const ref = "NC-" + Math.floor(10000+Math.random()*89999);
+        sneSay(`I've submitted a review request to our Sales &amp; Finance team on your behalf. Reference ${ref}. They typically respond within one business day.<span class="ref">Reference ${ref} · logged just now</span>`, true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Connect me to Finance now", fn:()=>{
+              sneSay("Connecting you directly…", true);
+              setTimeout(()=>sneSay("You're through to the Sales &amp; Finance line — hold for a moment while an agent picks up."),1100);
+            }},
+            {label:"Email is fine, thanks", fn:()=>{ sneSay("Perfect — you'll hear from them by email. I've attached your billing history to the review so they have full context."); }},
+          ]);
+        },900);
+      } else {
+        askFreeform("Describe the payment issue you're seeing and I'll log it for our billing team.");
+      }
+    }
+  },
+  route:{
+    issues:["Can't find a station","Station is full","Need directions","Report a station fault","Other"],
+    handle(issue){
+      if(issue==="Can't find a station"){
+        sneSay("Share your charger ID or nearest landmark and I'll route you to the closest available bay.", true);
+      } else if(issue==="Station is full"){
+        sneSay("Let me check live congestion across the network for you.", true);
+        setTimeout(()=>{
+          const ranked = rankedStations(state.time, state.weather);
+          renderForecastMini(ranked);
+          sneSay(`Right now, <b>${ranked[ranked.length-1].name}</b> has the lightest load — I'd suggest heading there.`);
+        },900);
+      } else if(issue==="Need directions"){
+        askFreeform("Which station are you headed to? I'll pull up the route.");
+      } else if(issue==="Report a station fault"){
+        sneSay("Thanks for flagging it — which bay number, and what are you seeing (offline screen, broken connector, blocked bay)?", true);
+      } else {
+        askFreeform("Tell me what you're trying to do and I'll point you the right way.");
+      }
+    }
+  },
+  vehicle:{
+    issues:["Update vehicle info","Manage subscription","App login issue","Other"],
+    handle(issue){
+      if(issue==="Update vehicle info"){
+        sneSay("Sure — what would you like to change: vehicle model, connector type, or registration plate?", true);
+      } else if(issue==="Manage subscription"){
+        sneSay("You're currently on the NitroCars Flex plan. I can show you plan options or pause your subscription.", true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Show plan options", fn:()=>{ sneSay("Flex, Commuter, and Fleet plans are available — I've opened the comparison in your account tab."); }},
+            {label:"Pause my subscription", fn:()=>{ sneSay("Done — your subscription is paused from today. Charging still works, just at pay-as-you-go rates."); }},
+          ]);
+        },900);
+      } else if(issue==="App login issue"){
+        sneSay("Let's get you back in. Are you not receiving the login code, or is the code being rejected?", true);
+      } else {
+        askFreeform("What would you like help with on your account?");
+      }
+    }
+  },
+  emergency:{
+    issues:["Vehicle won't start after charging","Stuck at a station","Safety concern","Other"],
+    handle(issue){
+      if(issue==="Vehicle won't start after charging"){
+        sneSay("I hear you — let's treat this as urgent. Is the vehicle in a safe location away from traffic?", true);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Yes, it's safe", fn:()=>{ sneSay("Good. I'm dispatching roadside diagnostics to your location now. Stay with the vehicle if you're comfortable doing so."); }},
+            {label:"No, it's blocking traffic", fn:()=>{ sneSay("Understood — priority dispatch sent. A response unit is on the way and should reach you within 15 minutes."); }},
+          ]);
+        },900);
+      } else if(issue==="Stuck at a station"){
+        sneSay("I'm alerting the nearest field technician now and keeping this chat open until they confirm arrival.", true);
+      } else if(issue==="Safety concern"){
+        sneSay("Your safety comes first. If you're in immediate danger, please contact local emergency services directly. I'm also notifying NitroCars site safety right now.", true);
+      } else {
+        askFreeform("Tell me what's happening and I'll route this to the right emergency channel immediately.");
+      }
+      setTimeout(()=>{
+        actionChips([{label:"Call roadside assistance", fn:()=>{ sneSay("Calling roadside assistance — connecting you now…", true); }}]);
+      },1300);
+    }
+  }
+};
+
+/* ============================================================
+   RENDER: sidebar state / problem grid / forecast
+   ============================================================ */
+let currentTab = "home";
+
+function selectTab(tab){
+  currentTab = tab;
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.getElementById("sidebar").classList.remove("open");
+
+  if(tab==="home"){
+    document.getElementById("homeView").style.display = "block";
+    document.getElementById("chatView").style.display = "none";
+  } else {
+    document.getElementById("homeView").style.display = "none";
+    document.getElementById("chatView").style.display = "block";
+    openChat(tab);
+  }
+}
+
+function buildProblemGrid(){
+  const grid = document.getElementById("problemGrid");
+  grid.innerHTML = "";
+  Object.entries(TAB_META).forEach(([key,meta])=>{
+    const div = document.createElement("div");
+    div.className = "problem-card";
+    div.onclick = ()=>selectTab(key);
+    div.innerHTML = `
+      <div class="icon-disc">${iconFor(key)}</div>
+      <b>${meta.label}</b>
+      <span>${meta.sub}</span>
+    `;
+    grid.appendChild(div);
+  });
+}
+function iconFor(key){
+  const svgs = {
+    charging:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dda23a" stroke-width="1.8"><path d="M13 3 L6 14 H11 L10 21 L18 10 H13 Z"/></svg>',
+    payment:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4fa88d" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M9.3 10 a2.7 2.2 0 0 1 5.4 0 c0 2.2 -5.4 1.6 -5.4 3.8 a2.7 2.2 0 0 0 5.4 0"/></svg>',
+    route:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#cc7942" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M15 9 L12.8 12.8 L9 15 L11.2 11.2 Z" fill="#cc7942" stroke="none"/></svg>',
+    vehicle:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c7bba7" stroke-width="1.8"><path d="M12 3 L19 6.5 V12 C19 17 15.8 20 12 21.5 C8.2 20 5 17 5 12 V6.5 Z"/></svg>',
+    emergency:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a8452f" stroke-width="1.8"><path d="M12 3 L21 20 H3 Z"/><path d="M12 9.5 V14.5 M12 17 V17.3"/></svg>',
+  };
+  return svgs[key];
+}
+
+function buildPills(){
+  const tp = document.getElementById("timePills");
+  tp.innerHTML = TIMES.map(t=>`<button class="${t===state.time?'active':''}" onclick="setTime('${t}')">${t}</button>`).join("");
+  const wp = document.getElementById("weatherPills");
+  wp.innerHTML = WEATHERS.map(w=>`<button class="${w===state.weather?'active':''}" onclick="setWeather('${w}')">${w}</button>`).join("");
+}
+function setTime(t){ state.time=t; buildPills(); renderForecast(); }
+function setWeather(w){ state.weather=w; buildPills(); renderForecast(); }
+
+function renderForecast(){
+  const ranked = rankedStations(state.time, state.weather);
+  const list = document.getElementById("stationListHome");
+  list.innerHTML = ranked.map(s=>{
+    const lv = levelInfo(s.load);
+    return `<div class="station-row">
+      <div class="load-dot" style="background:${lv.color}"></div>
+      <div class="name">${s.name}</div>
+      <div class="lvl" style="color:${lv.color}">${lv.label}</div>
+    </div>`;
+  }).join("");
+  drawSundial(ranked);
+}
+
+function drawSundial(ranked){
+  const wrap = document.getElementById("sundialSvgWrap");
+  const size = 172, cx=size/2, cy=size/2, r=68, strokeW=13;
+  const total = ranked.length;
+  const gap = 0.05; // radians gap between arcs
+  const circumference = Math.PI*2 - gap*total;
+  let angle = -Math.PI/2;
+  let arcs = "";
+  ranked.forEach(s=>{
+    const share = circumference/total;
+    const lv = levelInfo(s.load);
+    const start = angle;
+    const end = angle + share*Math.max(0.35, s.load+0.3);
+    arcs += arcPath(cx,cy,r,start,end,lv.color,strokeW);
+    angle = start + share + gap;
+  });
+  const avg = ranked.reduce((a,s)=>a+s.load,0)/ranked.length;
+  wrap.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#332b25" stroke-width="${strokeW}"/>
+    ${arcs}
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#f0e8da" font-family="Fraunces" font-weight="600" font-size="22">${Math.round(avg*100)}%</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#948872" font-family="Manrope" font-size="9.5">NETWORK LOAD</text>
+  </svg>`;
+}
+function arcPath(cx,cy,r,start,end,color,w){
+  const x1=cx+r*Math.cos(start), y1=cy+r*Math.sin(start);
+  const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end);
+  const large = (end-start) > Math.PI ? 1 : 0;
+  return `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+function renderForecastMini(ranked){
+  const html = `<div class="forecast-mini">${ranked.map(s=>{
+    const lv = levelInfo(s.load);
+    return `<div class="fm-row"><div class="load-dot" style="background:${lv.color}"></div><div class="name">${s.name}</div><div class="pct" style="color:${lv.color}">${lv.label}</div></div>`;
+  }).join("")}</div>`;
+  appendRaw(html);
+}
+
+function greet(){
+  const now = new Date();
+  const h = now.getHours();
+  const word = h<12 ? "Good morning" : h<18 ? "Good afternoon" : "Good evening";
+  document.getElementById("greetLine").textContent = `${word}, Thabo`;
+  document.getElementById("dateLine").textContent = now.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}).toUpperCase();
+}
+
+/* ============================================================
+   CHAT ENGINE
+   ============================================================ */
+let chatSeq = 0;
+
+function openChat(tab){
+  const meta = TAB_META[tab];
+  document.getElementById("chatTitle").textContent = meta.label;
+  document.getElementById("chatSub").textContent = "Talking with Sné · " + meta.sub;
+  const body = document.getElementById("chatBody");
+  body.innerHTML = "";
+  chatSeq++;
+  const seq = chatSeq;
+
+  sneSay("Hey there, how may I assist you today?");
+  typingThen(()=>{
+    if(seq!==chatSeq) return;
+    sneSay("First, could you share your Charger ID or the station location you're at?");
+    typingThen(()=>{
+      if(seq!==chatSeq) return;
+      sneSay(`Thanks. What seems to be the issue with your ${meta.label.toLowerCase()}?`);
+      issueChips(TAB_CONFIG[tab].issues, tab);
+    }, 700);
+  }, 650);
+}
+
+function typingThen(cb, delay){
+  const body = document.getElementById("chatBody");
+  const t = document.createElement("div");
+  t.className = "msg sne typing";
+  t.innerHTML = `<div class="avatar" style="background:radial-gradient(circle at 32% 28%, #a9d6c8, #4fa88d 60%)"></div><div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  body.appendChild(t);
+  scrollChat();
+  setTimeout(()=>{ t.remove(); cb(); }, delay);
+}
+
+function sneSay(html, thenTyping){
+  const body = document.getElementById("chatBody");
+  const m = document.createElement("div");
+  m.className = "msg sne";
+  m.innerHTML = `<div class="avatar" style="background:radial-gradient(circle at 32% 28%, #a9d6c8, #4fa88d 60%)"></div><div class="bubble">${html}</div>`;
+  body.appendChild(m);
+  scrollChat();
+}
+function userSay(text){
+  const body = document.getElementById("chatBody");
+  const m = document.createElement("div");
+  m.className = "msg user";
+  m.innerHTML = `<div class="avatar"></div><div class="bubble">${text}</div>`;
+  body.appendChild(m);
+  scrollChat();
+}
+function appendRaw(html){
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend", html);
+  scrollChat();
+}
+function scrollChat(){
+  const body = document.getElementById("chatBody");
+  body.scrollTop = body.scrollHeight;
+}
+
+function issueChips(issues, tab){
+  const row = document.createElement("div");
+  row.className = "chip-row";
+  row.id = "activeChips";
+  issues.forEach(issue=>{
+    const c = document.createElement("button");
+    c.className = "chip" + (issue==="Other" ? "" : "");
+    c.textContent = issue;
+    c.onclick = ()=>{
+      row.querySelectorAll("button").forEach(b=>b.disabled=true);
+      row.style.opacity=".45";
+      userSay(issue);
+      typingThen(()=>{ TAB_CONFIG[tab].handle(issue); }, 550);
+    };
+    row.appendChild(c);
+  });
+  document.getElementById("chatBody").appendChild(row);
+  scrollChat();
+}
+
+function actionChips(actions){
+  const row = document.createElement("div");
+  row.className = "action-row";
+  actions.forEach(a=>{
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = a.label;
+    b.onclick = ()=>{
+      row.querySelectorAll("button").forEach(x=>x.disabled=true);
+      row.style.opacity=".45";
+      userSay(a.label);
+      typingThen(a.fn, 550);
+    };
+    row.appendChild(b);
+  });
+  document.getElementById("chatBody").appendChild(row);
+  scrollChat();
+}
+
+let pendingFreeform = null;
+function askFreeform(prompt){
+  sneSay(prompt);
+  pendingFreeform = true;
+  document.getElementById("chatInput").focus();
+}
+function sendFreeText(){
+  const input = document.getElementById("chatInput");
+  const val = input.value.trim();
+  if(!val) return;
+  userSay(val);
+  input.value = "";
+  typingThen(()=>{
+    if(pendingFreeform){
+      pendingFreeform = false;
+      sneSay("Got it — I've logged that note against your case. A NitroCars specialist will follow up if anything further is needed. Anything else I can help with?");
+    } else {
+      sneSay(`Noted — "${val.length>60?val.slice(0,60)+'…':val}" has been added to this conversation. You can also pick one of the options above.`);
+    }
+  }, 600);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+greet();
+buildPills();
+buildProblemGrid();
+renderForecast();
+</script>
+</body>
+</html>
