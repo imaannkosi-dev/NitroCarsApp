@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NitroCars — Driver Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --basalt-950:#131010;
+    --basalt-900:#1a1614;
+    --basalt-800:#241f1b;
+    --basalt-700:#332b25;
+    --basalt-600:#463b32;
+    --powder-600:#4f7d94;
+    --powder-500:#7fa8c2;
+    --powder-400:#9dc2d8;
+    --powder-300:#c3dbe8;
+    --verdigris-500:#3f8f77;
+    --verdigris-400:#4fa88d;
+    --verdigris-200:#a9d6c8;
+    --ember-500:#dda23a;
+    --ember-300:#ecc584;
+    --redclay-500:#a8452f;
+    --redclay-300:#d98a72;
+    --bone-100:#f0e8da;
+    --bone-200:#e2d8c6;
+    --bone-300:#c7bba7;
+    --bone-500:#948872;
+    --font-display:'Fraunces', serif;
+    --font-body:'Manrope', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--basalt-950);
+    color:var(--bone-100);
+    font-family:var(--font-body);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--powder-500);color:var(--basalt-950);}
+
+  /* ---------- layout shell ---------- */
+  .app-shell{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  /* ---------- top bar ---------- */
+  .app-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 26px;
+    background:linear-gradient(180deg, var(--basalt-900), var(--basalt-950) 140%);
+    border-bottom:1px solid var(--basalt-700);
+    position:sticky; top:0; z-index:20;
+  }
+  .brandmark{display:flex; align-items:center; gap:11px;}
+  .brandmark svg{flex-shrink:0;}
+  .brand-word{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:.2px;
+    color:var(--bone-100);
+    line-height:1;
+  }
+  .brand-sub{
+    font-size:10px;
+    color:var(--bone-500);
+    letter-spacing:.4px;
+    margin-top:3px;
+  }
+
+  .driver-chip{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 10px 6px 6px;
+    background:var(--basalt-800);
+    border:1px solid var(--basalt-700);
+  }
+  .driver-avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--basalt-700);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11.5px; font-weight:700; color:var(--bone-200);
+  }
+  .driver-chip .who{font-size:12.5px; color:var(--bone-300); line-height:1.3;}
+  .driver-chip .who b{color:var(--bone-100); display:block; font-size:13px;}
+
+  /* ---------- main ---------- */
+  main{padding:26px 24px 110px; max-width:1180px; width:100%; margin:0 auto;}
+  .topbar{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:20px; margin-bottom:26px; flex-wrap:wrap;
+  }
+  .greeting-eyebrow{font-size:12.5px; color:var(--powder-400); font-weight:700; margin-bottom:6px;}
+  h1.greeting{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:33px;
+    margin:0;
+    color:var(--bone-100);
+    letter-spacing:.2px;
+  }
+  .greeting-sub{color:var(--bone-500); font-size:14px; margin-top:6px;}
+
+  .weather-controls{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .pillgroup{display:flex; gap:6px; background:var(--basalt-900); border:1px solid var(--basalt-700); padding:4px; border-radius:2px;}
+  .pillgroup button{
+    background:transparent; border:none; color:var(--bone-500);
+    font-family:var(--font-body); font-weight:600; font-size:12.5px;
+    padding:7px 11px; cursor:pointer; border-radius:1px;
+  }
+  .pillgroup button.active{background:var(--basalt-700); color:var(--bone-100);}
+  .pillgroup button:hover:not(.active){color:var(--bone-200);}
+
+  /* ---------- home / general view ---------- */
+  .grid-row{display:grid; grid-template-columns:1.3fr 1fr; gap:20px; margin-bottom:20px;}
+  @media (max-width:980px){.grid-row{grid-template-columns:1fr;}}
+
+  .megalith{
+    background:var(--basalt-900);
+    border:1px solid var(--basalt-700);
+    clip-path:polygon(0 16px, 16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+    padding:22px 24px;
+  }
+  .megalith h2{
+    font-family:var(--font-display); font-weight:600; font-size:17px;
+    margin:0 0 4px; color:var(--bone-100);
+  }
+  .megalith .h-sub{font-size:12.5px; color:var(--bone-500); margin-bottom:16px;}
+
+  /* traffic sundial */
+  .sundial-wrap{display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
+  .sundial{position:relative; width:172px; height:172px; flex-shrink:0;}
+  .station-list{flex:1; min-width:220px; display:flex; flex-direction:column; gap:10px;}
+  .station-row{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 11px;
+    background:var(--basalt-800);
+    border:1px solid var(--basalt-700);
+  }
+  .load-dot{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
+  .station-row .name{font-size:13.5px; font-weight:600; color:var(--bone-100); flex:1;}
+  .station-row .lvl{font-size:11.5px; color:var(--bone-500); font-weight:700;}
+
+  .stat-trio{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .stat-block{padding:14px 0; border-top:1px solid var(--basalt-700);}
+  .stat-block .num{font-family:var(--font-display); font-size:28px; font-weight:600; color:var(--bone-100); line-height:1;}
+  .stat-block .lbl{font-size:12px; color:var(--bone-500); margin-top:6px;}
+
+  .voucher-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 14px; background:var(--basalt-800); border:1px solid var(--basalt-700);
+    margin-top:14px;
+  }
+  .voucher-label{font-size:12.5px; color:var(--bone-500); font-weight:600;}
+  .voucher-amount{font-family:var(--font-display); font-weight:600; font-size:19px; color:var(--verdigris-400);}
+
+  .session-card{display:flex; flex-direction:column; gap:0;}
+  .session-empty{
+    display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+    padding:18px 0 4px;
+  }
+  .session-empty p{margin:0; color:var(--bone-300); font-size:13.5px; line-height:1.5; max-width:34ch;}
+
+  /* live location */
+  .live-badge{display:flex; align-items:center; gap:7px; font-size:11px; font-weight:800; color:var(--verdigris-400); letter-spacing:.6px; padding-top:2px;}
+  .live-dot{width:8px; height:8px; border-radius:50%; background:var(--verdigris-400); box-shadow:0 0 0 0 rgba(79,168,141,.6); animation:livepulse 1.8s infinite;}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(79,168,141,.55);} 70%{box-shadow:0 0 0 9px rgba(79,168,141,0);} 100%{box-shadow:0 0 0 0 rgba(79,168,141,0);}}
+  .live-info-row{display:flex; align-items:center; gap:13px; margin-top:16px; padding-top:16px; border-top:1px solid var(--basalt-700); flex-wrap:wrap;}
+  .live-avatar{width:36px; height:36px; border-radius:50%; background:var(--basalt-700); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; color:var(--bone-100); flex-shrink:0;}
+  .live-info-text{flex:1; min-width:180px; line-height:1.35;}
+  .live-info-text b{display:block; font-size:13.5px; color:var(--bone-100); font-family:var(--font-display);}
+  .live-info-text span{font-size:12px; color:var(--bone-500);}
+
+  /* active session progress */
+  .session-progress-wrap{padding:18px 0 4px;}
+  .session-progress-bar{height:8px; background:var(--basalt-800); border:1px solid var(--basalt-700); overflow:hidden;}
+  .session-progress-fill{height:100%; background:linear-gradient(90deg, var(--verdigris-500), var(--verdigris-400)); transition:width .6s ease;}
+  .session-progress-label{margin-top:9px; font-size:12.5px; color:var(--bone-300);}
+  .session-progress-label span{color:var(--bone-100); font-weight:700;}
+
+  .btn{
+    font-family:var(--font-body); font-weight:700; font-size:13px;
+    padding:10px 18px; cursor:pointer; border:none;
+    color:var(--basalt-950);
+    background:var(--powder-500);
+    clip-path:polygon(0 8px, 8px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .btn:hover{background:var(--powder-400);}
+  .btn.secondary{background:transparent; color:var(--bone-100); border:1px solid var(--basalt-600);}
+  .btn.secondary:hover{border-color:var(--powder-500);}
+  .btn.danger{background:var(--redclay-500); color:var(--bone-100);}
+  .btn.danger:hover{background:#bd5138;}
+  .btn.ghost{background:transparent; color:var(--verdigris-400); border:1px solid var(--verdigris-500); padding:8px 14px; font-size:12.5px;}
+
+  .problem-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px;}
+  @media (max-width:980px){.problem-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:560px){.problem-grid{grid-template-columns:1fr;}}
+  .problem-card{
+    background:var(--basalt-900); border:1px solid var(--basalt-700);
+    padding:18px 16px; cursor:pointer;
+    clip-path:polygon(0 12px, 12px 0, 100% 0, 100% 100%, 0 100%);
+    transition:border-color .15s ease, transform .15s ease;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .problem-card:hover{border-color:var(--powder-500); transform:translateY(-2px);}
+  .problem-card .icon-disc{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--basalt-800); border:1px solid var(--basalt-700);
+  }
+  .problem-card b{font-size:14px; color:var(--bone-100); font-weight:700;}
+  .problem-card span{font-size:12px; color:var(--bone-500); line-height:1.4;}
+
+  /* pricing table */
+  .price-table{width:100%; border-collapse:collapse;}
+  .price-table th{
+    text-align:left; font-size:11px; color:var(--bone-500); font-weight:700;
+    padding:0 12px 10px; border-bottom:1px solid var(--basalt-700);
+  }
+  .price-table td{
+    padding:13px 12px; font-size:13.5px; border-bottom:1px solid var(--basalt-800);
+    color:var(--bone-200);
+  }
+  .price-table tr:last-child td{border-bottom:none;}
+  .price-table td.plan-name{font-weight:700; color:var(--bone-100); font-family:var(--font-display); font-size:15px;}
+  .price-table td.rate{color:var(--verdigris-400); font-weight:700;}
+  .voucher-chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;}
+  .voucher-chip-row span{
+    background:var(--basalt-800); border:1px solid var(--basalt-700);
+    padding:7px 12px; font-size:12.5px; font-weight:700; color:var(--ember-300);
+  }
+  .map-embed{width:100%; height:320px; border:0; filter:grayscale(.2) contrast(1.05) brightness(.92);}
+  .map-caption{display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; flex-wrap:wrap;}
+  .map-caption small{color:var(--bone-500); font-size:11px;}
+
+  /* ---------- chat view ---------- */
+  #chatView, #generalView{display:none;}
+  .chat-shell{
+    background:var(--basalt-900); border:1px solid var(--basalt-700);
+    display:flex; flex-direction:column;
+    height:calc(100vh - 160px);
+    min-height:460px;
+    clip-path:polygon(0 18px, 18px 0, 100% 0, 100% 100%, 0 100%);
+  }
+  .chat-head{
+    display:flex; align-items:center; gap:12px;
+    padding:16px 20px; border-bottom:1px solid var(--basalt-700);
+  }
+  .chat-back{
+    background:none; border:1px solid var(--basalt-600); color:var(--bone-300);
+    width:32px; height:32px; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .chat-back:hover{border-color:var(--powder-500); color:var(--bone-100);}
+  .chat-head-text b{display:block; font-size:15px; color:var(--bone-100); font-family:var(--font-display); font-weight:600;}
+  .chat-head-text span{font-size:11.5px; color:var(--bone-500);}
+  .sne-disc{
+    width:34px; height:34px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--verdigris-200), var(--verdigris-500) 60%, var(--verdigris-500));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-weight:700; color:var(--basalt-950); font-size:15px;
+    flex-shrink:0;
+  }
+  .chat-head .sne-disc{margin-left:auto;}
+
+  /* ---------- floating Sné button ---------- */
+  .sne-fab{
+    position:fixed; right:20px; bottom:84px; z-index:35;
+    width:54px; height:54px; border-radius:50%;
+    background:var(--basalt-900);
+    border:1px solid var(--basalt-600);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(0,0,0,.5);
+  }
+  .sne-fab:hover{border-color:var(--powder-500);}
+  .sne-fab .sne-disc{width:40px; height:40px; font-size:16px;}
+
+  /* ---------- bottom nav ---------- */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    display:flex;
+    background:linear-gradient(0deg, var(--basalt-950), var(--basalt-900) 90%);
+    border-top:1px solid var(--basalt-700);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:transparent; border:none; cursor:pointer;
+    padding:7px 2px 5px;
+    color:var(--bone-500);
+    font-family:var(--font-body);
+  }
+  .bn-emoji{font-size:20px; line-height:1; filter:grayscale(.3) opacity(.75); transition:transform .15s ease, filter .15s ease;}
+  .bn-label{font-size:9.5px; font-weight:700; letter-spacing:.2px;}
+  .bottom-nav-item.active{color:var(--powder-300);}
+  .bottom-nav-item.active .bn-emoji{filter:none; transform:scale(1.15) translateY(-1px);}
+  .bottom-nav-item:hover .bn-emoji{filter:none;}
+
+  .chat-body{
+    flex:1; overflow-y:auto; padding:22px 24px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .msg{display:flex; gap:10px; max-width:78%; animation:rise .28s ease;}
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+  .msg.sne{align-self:flex-start;}
+  .msg.user{align-self:flex-end; flex-direction:row-reverse; margin-left:auto;}
+  .msg .avatar{width:26px; height:26px; border-radius:50%; flex-shrink:0; margin-top:2px;}
+  .msg.sne .avatar{background:radial-gradient(circle at 32% 28%, var(--verdigris-200), var(--verdigris-500) 60%);}
+  .msg.user .avatar{background:radial-gradient(circle at 32% 28%, #d9ecf5, #7fa8c2 65%);}
+
+  /* metallic cylinder chat bubbles */
+  .bubble{
+    position:relative;
+    padding:13px 17px;
+    font-size:13.8px; line-height:1.55;
+    border-radius:22px;
+    overflow:hidden;
+  }
+  .msg.sne .bubble{
+    background:linear-gradient(180deg,
+      #97ab9f 0%, #587265 9%, #253128 30%, #182019 50%,
+      #202c25 68%, #3f5a4d 88%, #92ab9d 100%);
+    color:var(--bone-100);
+    border:1px solid #0d1512;
+    box-shadow:
+      inset 0 2px 1px rgba(255,255,255,.4),
+      inset 0 -5px 9px rgba(0,0,0,.6),
+      0 5px 10px rgba(0,0,0,.45);
+  }
+  .msg.user .bubble{
+    background:linear-gradient(180deg,
+      #d9ecf5 0%, #9dc2d8 9%, #47677a 30%, #2b3f4c 50%,
+      #35505f 68%, #6d97ab 88%, #d3e8f2 100%);
+    color:#0f1c22;
+    font-weight:600;
+    border:1px solid #16232a;
+    box-shadow:
+      inset 0 2px 1px rgba(255,255,255,.5),
+      inset 0 -5px 9px rgba(0,0,0,.5),
+      0 5px 10px rgba(0,0,0,.4);
+  }
+  .bubble::before{
+    content:"";
+    position:absolute; top:5px; left:16px; right:16px; height:2px;
+    background:rgba(255,255,255,.4); border-radius:2px;
+  }
+  .bubble .ref{display:block; margin-top:8px; font-size:11.5px; font-weight:700;}
+  .msg.sne .bubble .ref{color:#d3ecdf;}
+  .msg.user .bubble .ref{color:#122732;}
+
+  .typing .bubble{display:flex; gap:4px; align-items:center; padding:15px 18px;}
+  .typing .dot{width:6px; height:6px; border-radius:50%; background:var(--bone-100); animation:blink 1.1s infinite;}
+  .typing .dot:nth-child(2){animation-delay:.15s;}
+  .typing .dot:nth-child(3){animation-delay:.3s;}
+  @keyframes blink{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px 36px;}
+  .chip{
+    background:linear-gradient(180deg, #322b24, #1b1713);
+    border:1px solid var(--basalt-600); color:var(--bone-100);
+    font-family:var(--font-body); font-weight:600; font-size:12.8px;
+    padding:9px 14px; cursor:pointer;
+    border-radius:14px;
+  }
+  .chip:hover{border-color:var(--powder-500); background:linear-gradient(180deg,#3a322a,#221c17);}
+  .chip.warn{border-color:var(--redclay-500); color:var(--redclay-300);}
+  .chip.warn:hover{background:rgba(168,69,47,.15);}
+  .chip[disabled]{opacity:.4; cursor:default;}
+
+  .action-row{display:flex; flex-wrap:wrap; gap:8px; margin:2px 0 4px 36px;}
+
+  .chat-foot{
+    border-top:1px solid var(--basalt-700); padding:14px 18px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .chat-foot input{
+    flex:1; background:var(--basalt-800); border:1px solid var(--basalt-700);
+    color:var(--bone-100); font-family:var(--font-body); font-size:13.5px;
+    padding:11px 13px; outline:none;
+  }
+  .chat-foot input:focus{border-color:var(--powder-500);}
+  .chat-foot input::placeholder{color:var(--bone-500);}
+  .send-btn{
+    width:40px; height:40px; background:var(--powder-500); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .send-btn:hover{background:var(--powder-400);}
+
+  /* mini forecast card injected into chat */
+  .forecast-mini{
+    margin:2px 0 4px 36px; background:var(--basalt-800); border:1px solid var(--basalt-700);
+    padding:14px 16px; max-width:340px;
+  }
+  .forecast-mini .fm-row{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--basalt-700); font-size:12.8px;}
+  .forecast-mini .fm-row:last-child{border-bottom:none;}
+  .forecast-mini .fm-row .name{flex:1; color:var(--bone-100); font-weight:600;}
+  .forecast-mini .fm-row .pct{color:var(--bone-500); font-weight:700; font-size:11.5px;}
+
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-track{background:var(--basalt-900);}
+  ::-webkit-scrollbar-thumb{background:var(--basalt-600);}
+  a{color:var(--verdigris-400);}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- ================= TOP BAR ================= -->
+  <header class="app-topbar">
+    <div class="brandmark">
+      <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+        <path d="M17 2 L30 11 L26 32 L8 32 L4 11 Z" fill="#241f1b" stroke="#463b32"/>
+        <path d="M19 8 L11 18 H16 L14 26 L23 15 H18 Z" fill="#9bc3d6"/>
+      </svg>
+      <div>
+        <div class="brand-word">NitroCars</div>
+        <div class="brand-sub">DRIVER CONSOLE</div>
+      </div>
+    </div>
+    <div class="driver-chip">
+      <div class="driver-avatar">DK</div>
+      <div class="who"><b>Dylan K.</b>Model 3 · NC-88214</div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+
+    <!-- ---------- HOME VIEW ---------- -->
+    <div id="homeView">
+      <div class="topbar">
+        <div>
+          <div class="greeting-eyebrow" id="dateLine">—</div>
+          <h1 class="greeting" id="greetLine">Good day, Dylan</h1>
+          <div class="greeting-sub">Here's how the network looks right now.</div>
+        </div>
+      </div>
+
+      <div class="megalith" id="liveLocationCard" style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div>
+            <h2>Live location</h2>
+            <div class="h-sub" style="margin-bottom:0;">Position from your vehicle's last check-in.</div>
+          </div>
+          <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <iframe class="map-embed" style="height:230px; margin-top:14px;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps?q=Sandton+City+EV+Charging+Station+Johannesburg&output=embed"></iframe>
+        <div class="live-info-row">
+          <div class="live-avatar">DK</div>
+          <div class="live-info-text">
+            <b>Dylan K. — Sandton City Charging Hub</b>
+            <span>Bay 3 · connected <span id="liveTimer">12m 00s</span> ago</span>
+          </div>
+          <button class="btn secondary" onclick="openDirections('Sandton City Charging Hub')">Directions</button>
+        </div>
+      </div>
+
+      <div class="grid-row">
+        <div class="megalith">
+          <h2>Station traffic forecast</h2>
+          <div class="h-sub">Congestion modelled from current time-of-day and weather conditions.</div>
+
+          <div class="weather-controls" style="margin-bottom:16px;">
+            <div class="pillgroup" id="timePills"></div>
+            <div class="pillgroup" id="weatherPills"></div>
+          </div>
+
+          <div class="sundial-wrap">
+            <div class="sundial" id="sundialSvgWrap"></div>
+            <div class="station-list" id="stationListHome"></div>
+          </div>
+        </div>
+
+        <div class="megalith session-card">
+          <h2>Active session</h2>
+          <div class="h-sub">Charging now at Sandton City Charging Hub — Bay 3.</div>
+          <div class="session-progress-wrap">
+            <div class="session-progress-bar"><div class="session-progress-fill" id="sessionProgressFill" style="width:41%;"></div></div>
+            <div class="session-progress-label"><span id="sessionPct">41%</span> battery · <span id="sessionKwh">18.4</span> kWh delivered</div>
+          </div>
+          <div class="voucher-row">
+            <span class="voucher-label">Voucher balance</span>
+            <span class="voucher-amount" id="voucherBalanceVal">R0</span>
+          </div>
+          <div class="stat-trio">
+            <div class="stat-block"><div class="num">312</div><div class="lbl">kWh this month</div></div>
+            <div class="stat-block"><div class="num">R684</div><div class="lbl">spent this month</div></div>
+            <div class="stat-block"><div class="num">41kg</div><div class="lbl">CO₂ offset</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- GENERAL VIEW ---------- -->
+    <div id="generalView">
+      <div class="topbar">
+        <div>
+          <div class="greeting-eyebrow">RESOURCES</div>
+          <h1 class="greeting">General information</h1>
+          <div class="greeting-sub">Pricing, vouchers, and the nationwide charging network.</div>
+        </div>
+      </div>
+
+      <div class="megalith" style="margin-bottom:20px;">
+        <h2>Pricing</h2>
+        <div class="h-sub">Rates apply nationwide across all NitroCars stations.</div>
+        <table class="price-table">
+          <tr><th>Plan</th><th>Rate</th><th>Monthly fee</th><th>Notes</th></tr>
+          <tr>
+            <td class="plan-name">Pay-As-You-Go</td><td class="rate">R4.20 /kWh</td><td>None</td>
+            <td>No commitment — tap and charge.</td>
+          </tr>
+          <tr>
+            <td class="plan-name">Flex</td><td class="rate">R3.60 /kWh</td><td>R99</td>
+            <td>Lower rate, cancel anytime.</td>
+          </tr>
+          <tr>
+            <td class="plan-name">Commuter</td><td class="rate">R3.10 /kWh</td><td>R249</td>
+            <td>Includes 2 free fast sessions monthly.</td>
+          </tr>
+          <tr>
+            <td class="plan-name">Fleet</td><td class="rate">Custom</td><td>Custom</td>
+            <td>For businesses — dedicated account manager.</td>
+          </tr>
+        </table>
+        <div class="h-sub" style="margin:18px 0 4px;">Prepaid vouchers — never expire, redeemable at any station</div>
+        <div class="voucher-chip-row">
+          <span>R150</span><span>R300</span><span>R500</span><span>R750</span><span>R1000</span>
+        </div>
+      </div>
+
+      <div class="megalith">
+        <h2>Charging network map</h2>
+        <div class="h-sub">Every NitroCars station nationwide, powered by Google Maps.</div>
+        <iframe class="map-embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps?q=NitroCars+EV+charging+stations+South+Africa&output=embed"></iframe>
+        <div class="map-caption">
+          <small>Map data ©Google</small>
+          <button class="btn secondary" onclick="window.open('https://www.google.com/maps/search/NitroCars+EV+charging+stations+South+Africa','_blank')">Open full map</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- CHAT VIEW ---------- -->
+    <div id="chatView">
+      <div class="chat-shell">
+        <div class="chat-head">
+          <button class="chat-back" onclick="selectTab('home')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4 L7 12 L15 20"/></svg>
+          </button>
+          <div class="chat-head-text">
+            <b id="chatTitle">Charging</b>
+            <span id="chatSub">Talking with Sné</span>
+          </div>
+          <div class="sne-disc">S</div>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-foot">
+          <input id="chatInput" type="text" placeholder="Type a charger ID, station name, or message…" onkeydown="if(event.key==='Enter')sendFreeText()">
+          <button class="send-btn" onclick="sendFreeText()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#131010" stroke-width="2"><path d="M4 12 L20 4 L14 20 L11 13 Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= Sné FAB ================= -->
+  <button class="sne-fab" onclick="selectTab(currentTab==='home'||currentTab==='general' ? 'charging' : currentTab)" title="Talk to Sné">
+    <span class="sne-disc">S</span>
+  </button>
+
+  <!-- ================= BOTTOM NAV ================= -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" data-tab="home" onclick="selectTab('home')">
+      <span class="bn-emoji">🏠</span><span class="bn-label">Home</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="general" onclick="selectTab('general')">
+      <span class="bn-emoji">ℹ️</span><span class="bn-label">General</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="charging" onclick="selectTab('charging')">
+      <span class="bn-emoji">⚡</span><span class="bn-label">Charging</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="payment" onclick="selectTab('payment')">
+      <span class="bn-emoji">💳</span><span class="bn-label">Payment</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="route" onclick="selectTab('route')">
+      <span class="bn-emoji">🗺️</span><span class="bn-label">Route</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="vehicle" onclick="selectTab('vehicle')">
+      <span class="bn-emoji">🚗</span><span class="bn-label">Vehicle</span>
+    </button>
+    <button class="bottom-nav-item" data-tab="emergency" onclick="selectTab('emergency')">
+      <span class="bn-emoji">🆘</span><span class="bn-label">SOS</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const STATIONS = [
+  { name:"Sandton City",               base:0.35, time:{Morning:.35,Afternoon:.55,Evening:.85,Night:.15}, weather:{Clear:0,Rain:.15,Storm:.3,Heatwave:.2} },
+  { name:"Rosebank Mall",              base:0.5,  time:{Morning:.6,Afternoon:.5,Evening:.6,Night:.2},  weather:{Clear:0,Rain:.1,Storm:.2,Heatwave:.35} },
+  { name:"Melrose Arch",               base:0.25, time:{Morning:.2,Afternoon:.4,Evening:.7,Night:.1},  weather:{Clear:0,Rain:.25,Storm:.4,Heatwave:.15} },
+  { name:"Menlyn Park, Pretoria",      base:0.4,  time:{Morning:.75,Afternoon:.45,Evening:.4,Night:.1}, weather:{Clear:0,Rain:.05,Storm:.15,Heatwave:.1} },
+  { name:"Gateway, Durban",            base:0.3,  time:{Morning:.3,Afternoon:.35,Evening:.5,Night:.05}, weather:{Clear:0,Rain:.2,Storm:.3,Heatwave:.4} },
+  { name:"V&A Waterfront, Cape Town",  base:0.45, time:{Morning:.5,Afternoon:.65,Evening:.9,Night:.25}, weather:{Clear:0,Rain:.15,Storm:.25,Heatwave:.2} },
+];
+const TIMES = ["Morning","Afternoon","Evening","Night"];
+const WEATHERS = ["Clear","Rain","Storm","Heatwave"];
+
+let state = { time:"Afternoon", weather:"Clear", voucherBalance:0 };
+const hr = new Date().getHours();
+state.time = hr<11 ? "Morning" : hr<17 ? "Afternoon" : hr<21 ? "Evening" : "Night";
+
+function congestion(st, time, weather){
+  const val = st.base*0.3 + (st.time[time]||0)*0.5 + (st.weather[weather]||0)*0.2;
+  return Math.max(0, Math.min(1, val));
+}
+function levelInfo(v){
+  if(v < .4) return {label:"Light", color:"var(--verdigris-400)"};
+  if(v < .7) return {label:"Moderate", color:"var(--ember-500)"};
+  return {label:"Heavy", color:"var(--redclay-500)"};
+}
+function rankedStations(time, weather){
+  return STATIONS.map(s=>({...s, load:congestion(s,time,weather)})).sort((a,b)=>b.load-a.load);
+}
+function refNum(){ return "NC-" + Math.floor(10000+Math.random()*89999); }
+function openDirections(name){
+  const url = "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(name + " NitroCars EV charging station");
+  window.open(url, "_blank");
+}
+
+/* ============================================================
+   PROBLEM TABS CONFIG
+   ============================================================ */
+const TAB_META = {
+  charging:{ label:"Charging", sub:"Session & hardware issues" },
+  payment:{ label:"Payment", sub:"Billing & transactions" },
+  route:{ label:"Route & Stations", sub:"Finding & reaching a bay" },
+  vehicle:{ label:"Vehicle & Account", sub:"Profile, plan & login" },
+  emergency:{ label:"Emergency", sub:"Roadside & safety" },
+};
+
+let pendingAction = null; // null | 'directions' | 'findStation' | 'freeform'
+
+function callServices(){
+  sneSay("Connecting you to our Services team…");
+  typingThen(()=>{ sneSay("You're through — hold for the next available agent."); }, 1000);
+}
+function otherFlow(prompt){
+  sneSay(prompt);
+  pendingAction = "freeform";
+  actionChips([{label:"Call the Services team", fn:callServices}]);
+}
+function askFreeform(prompt, action){
+  sneSay(prompt);
+  pendingAction = action || "freeform";
+}
+function buyVoucher(amount){
+  state.voucherBalance += amount;
+  updateVoucherDisplay();
+  sneSay(`R${amount} voucher purchased and added to your account. New voucher balance: <b>R${state.voucherBalance}</b>.`);
+}
+function updateVoucherDisplay(){
+  const el = document.getElementById("voucherBalanceVal");
+  if(el) el.textContent = "R" + state.voucherBalance;
+}
+
+const TAB_CONFIG = {
+  charging:{
+    issues:["Slow charging","Charger locked in car","Charging won't start","Broken connector","Connector won't release","Other"],
+    handle(issue){
+      if(issue==="Slow charging"){
+        sneSay("That can happen with a cold battery, a shared bay splitting power with a neighbouring stall, or a worn cable. I'm pulling live diagnostics on your bay now.");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Check if sharing power with next stall", fn:()=>{
+              sneSay("Checking bay draw… confirmed — this bay is currently splitting a 150kW line with the adjacent stall, which is why output is reduced.");
+              setTimeout(()=>{
+                actionChips([
+                  {label:"Move me to a dedicated bay", fn:()=>{ sneSay("Done — Melrose Arch, bay 4 is holding a dedicated 150kW line for you for the next 15 minutes."); actionChips([{label:"Get directions", fn:()=>openDirections("Melrose Arch")}]); }},
+                  {label:"Keep current bay", fn:()=>{ sneSay("Understood, I'll leave the session as is. It should still finish, just a little slower."); }},
+                ]);
+              },900);
+            }},
+            {label:"Move me to a free bay", fn:()=>{ sneSay("Done — Melrose Arch, bay 4 is holding a dedicated 150kW line for you for the next 15 minutes."); actionChips([{label:"Get directions", fn:()=>openDirections("Melrose Arch")}]); }},
+            {label:"Keep current bay", fn:()=>{ sneSay("Understood, I'll leave the session as is. It should still finish, just a little slower."); }},
+          ]);
+        },1000);
+      } else if(issue==="Charger locked in car"){
+        sneSay("That's usually the connector's safety latch holding because the car still thinks it's charging. I can send a manual release signal to the connector.");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Send release signal", fn:()=>{
+              sneSay("Signal sent. Give it about 10 seconds, then try the release button on the handle again.");
+              setTimeout(()=>sneSay("Let me know if it's still stuck and I'll flag a technician to the bay."),900);
+            }},
+            {label:"It's still stuck", fn:()=>{ sneSay("Noted — I've flagged bay support. A technician will reach the station within 20 minutes. You'll get an SMS when they arrive."); }},
+          ]);
+        },900);
+      } else if(issue==="Charging won't start"){
+        sneSay("Let's narrow it down — is the cable fully seated and the app showing your session as authorised?");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Cable is seated, still nothing", fn:()=>{ sneSay("I've restarted the connector remotely from our side — this usually resolves an authorisation mismatch. Try plugging in again now."); }},
+            {label:"Not sure how to check", fn:()=>{ sneSay("No problem — unplug fully, wait 5 seconds, reconnect, and make sure the app shows a green 'session active' banner before you walk away."); }},
+          ]);
+        },900);
+      } else if(issue==="Broken connector"){
+        sneSay("Sorry about that — I'll get a technician looking at it right away.");
+        setTimeout(()=>{
+          const ref = refNum();
+          sneSay(`I've submitted a repair ticket for this connector. In the meantime, please use another stall — I can show you the nearest available one.<span class="ref">Reference ${ref} · logged just now</span>`);
+          setTimeout(()=>{
+            actionChips([{label:"Show nearest available stall", fn:()=>{
+              const light = rankedStations(state.time, state.weather).slice(-1)[0];
+              sneSay(`${light.name} currently has the lightest load — heading there now.`);
+              actionChips([{label:"Get directions", fn:()=>openDirections(light.name)}]);
+            }}]);
+          },800);
+        },900);
+      } else if(issue==="Connector won't release"){
+        sneSay("Got it — for safety, connectors lock until the session closes cleanly. I'll force-close the session from here.");
+        setTimeout(()=>{
+          sneSay("Session force-closed. The connector should unlock now — you won't be charged for any time after the fault occurred.");
+        },900);
+      } else {
+        otherFlow("Tell me a bit more about what's happening with your charge, and I'll get it sorted.");
+      }
+    }
+  },
+  payment:{
+    issues:["Card failure","App spinning","Billing error","Buy a charging voucher","Other"],
+    handle(issue){
+      if(issue==="Card failure"){
+        sneSay("Sorry about that. It's usually one of three things: the card's expired, the bank's declining a new merchant, or there's a temporary hold from a prior session.");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Check balance & retry", fn:()=>{
+              sneSay("Checking with your bank…");
+              typingThen(()=>{
+                sneSay("Good news — there's sufficient funds on this card. This looks like a temporary network decline, so I'll initiate a secure remote charge instead of waiting on a retry.");
+                actionChips([{label:"Initiate remote charge", fn:()=>{
+                  sneSay("Remote charge initiated — authorised and your charging session has started. You're good to go!");
+                }}]);
+              },1000);
+            }},
+            {label:"Use a different card", fn:()=>{ sneSay("Opening your payment methods — add a new card and I'll retry the charge immediately."); }},
+          ]);
+        },900);
+      } else if(issue==="App spinning"){
+        sneSay("That's usually a stalled session sync rather than a real charge. I'll refresh your session from our servers.");
+        setTimeout(()=>{
+          sneSay("Refreshed — force-close the app and reopen it, and the spinner should clear. If it doesn't, come back here and I'll escalate it as a technical fault.");
+        },900);
+      } else if(issue==="Billing error"){
+        const ref = refNum();
+        sneSay(`I've submitted a review request to our Sales &amp; Finance team on your behalf. They typically respond within one business day.<span class="ref">Reference ${ref} · logged just now</span>`);
+        setTimeout(()=>{
+          actionChips([
+            {label:"Connect me to Finance now", fn:()=>{
+              sneSay("Connecting you directly…");
+              setTimeout(()=>sneSay("You're through to the Sales &amp; Finance line — hold for a moment while an agent picks up."),1100);
+            }},
+            {label:"Email is fine, thanks", fn:()=>{ sneSay("Perfect — you'll hear from them by email. I've attached your billing history to the review so they have full context."); }},
+          ]);
+        },900);
+      } else if(issue==="Buy a charging voucher"){
+        sneSay("Sure — here are our voucher denominations:");
+        setTimeout(()=>{
+          actionChips([
+            {label:"R150", fn:()=>buyVoucher(150)},
+            {label:"R300", fn:()=>buyVoucher(300)},
+            {label:"R500", fn:()=>buyVoucher(500)},
+            {label:"R750", fn:()=>buyVoucher(750)},
+            {label:"R1000", fn:()=>buyVoucher(1000)},
+          ]);
+        },700);
+      } else {
+        otherFlow("Describe the payment issue you're seeing and I'll log it for our billing team.");
+      }
+    }
+  },
+  route:{
+    issues:["Can't find a station","Station is full","Need directions","Report a station fault","Other"],
+    handle(issue){
+      if(issue==="Can't find a station"){
+        askFreeform("Share your charger ID or nearest landmark and I'll find the closest available bays for you.", "findStation");
+      } else if(issue==="Station is full"){
+        sneSay("Let me check live congestion across the network for you.");
+        setTimeout(()=>{
+          const ranked = rankedStations(state.time, state.weather);
+          renderForecastMini(ranked);
+          const lightest = ranked[ranked.length-1];
+          sneSay(`Right now, <b>${lightest.name}</b> has the lightest load — I'd suggest heading there.`);
+          actionChips([{label:"Get directions to " + lightest.name, fn:()=>openDirections(lightest.name)}]);
+        },900);
+      } else if(issue==="Need directions"){
+        askFreeform("Which station are you headed to? I'll pull up the route in Google Maps.", "directions");
+      } else if(issue==="Report a station fault"){
+        sneSay("Thanks for flagging it — which bay number, and what are you seeing (offline screen, broken connector, blocked bay)?");
+      } else {
+        otherFlow("Tell me what you're trying to do and I'll point you the right way.");
+      }
+    }
+  },
+  vehicle:{
+    issues:["Update vehicle info","Manage subscription","App login issue","Other"],
+    handle(issue){
+      if(issue==="Update vehicle info"){
+        sneSay("Sure — what would you like to change: vehicle model, connector type, or registration plate?");
+      } else if(issue==="Manage subscription"){
+        sneSay("You're currently on the NitroCars Flex plan. I can show you plan options or pause your subscription.");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Show plan options", fn:()=>{ sneSay("Flex, Commuter, and Fleet plans are available — see full pricing under the General tab."); }},
+            {label:"Pause my subscription", fn:()=>{ sneSay("Done — your subscription is paused from today. Charging still works, just at pay-as-you-go rates."); }},
+          ]);
+        },900);
+      } else if(issue==="App login issue"){
+        sneSay("Let's get you back in. Are you not receiving the login code, or is the code being rejected?");
+      } else {
+        otherFlow("What would you like help with on your account?");
+      }
+    }
+  },
+  emergency:{
+    issues:["Vehicle won't start after charging","Stuck at a station","Safety concern","Other"],
+    handle(issue){
+      if(issue==="Vehicle won't start after charging"){
+        sneSay("I hear you — let's treat this as urgent. Is the vehicle in a safe location away from traffic?");
+        setTimeout(()=>{
+          actionChips([
+            {label:"Yes, it's safe", fn:()=>{ sneSay("Good. I'm dispatching roadside diagnostics to your location now. Stay with the vehicle if you're comfortable doing so."); }},
+            {label:"No, it's blocking traffic", fn:()=>{ sneSay("Understood — priority dispatch sent. A response unit is on the way and should reach you within 15 minutes."); }},
+          ]);
+        },900);
+      } else if(issue==="Stuck at a station"){
+        sneSay("I'm alerting the nearest field technician now and keeping this chat open until they confirm arrival.");
+      } else if(issue==="Safety concern"){
+        sneSay("Your safety comes first. If you're in immediate danger, please contact local emergency services directly. I'm also notifying NitroCars site safety right now.");
+      } else {
+        sneSay("Tell me what's happening and I'll route this to the right emergency channel immediately.");
+        pendingAction = "freeform";
+      }
+      setTimeout(()=>{
+        actionChips([{label:"Call roadside assistance", fn:()=>{ sneSay("Calling roadside assistance — connecting you now…"); }}]);
+      },1300);
+    }
+  }
+};
+
+/* ============================================================
+   RENDER: bottom nav state / forecast
+   ============================================================ */
+let currentTab = "home";
+
+function selectTab(tab){
+  currentTab = tab;
+  document.querySelectorAll(".bottom-nav-item").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+
+  document.getElementById("homeView").style.display = "none";
+  document.getElementById("generalView").style.display = "none";
+  document.getElementById("chatView").style.display = "none";
+
+  if(tab==="home"){
+    document.getElementById("homeView").style.display = "block";
+  } else if(tab==="general"){
+    document.getElementById("generalView").style.display = "block";
+  } else {
+    document.getElementById("chatView").style.display = "block";
+    openChat(tab);
+  }
+}
+
+/* ---------- live location + active session ticking (simulated) ---------- */
+let liveConnectedSeconds = 12*60 + 4;
+function renderLiveTimer(){
+  const el = document.getElementById("liveTimer");
+  if(!el) return;
+  const m = Math.floor(liveConnectedSeconds/60), s = liveConnectedSeconds%60;
+  el.textContent = `${m}m ${String(s).padStart(2,"0")}s`;
+}
+setInterval(()=>{ liveConnectedSeconds++; renderLiveTimer(); }, 1000);
+
+let sessionPct = 41, sessionKwh = 18.4;
+function renderSessionProgress(){
+  const fill = document.getElementById("sessionProgressFill");
+  const pctEl = document.getElementById("sessionPct");
+  const kwhEl = document.getElementById("sessionKwh");
+  if(!fill) return;
+  fill.style.width = sessionPct + "%";
+  pctEl.textContent = sessionPct + "%";
+  kwhEl.textContent = sessionKwh.toFixed(1);
+}
+setInterval(()=>{
+  if(sessionPct < 97){
+    sessionPct += 1;
+    sessionKwh += 0.4 + Math.random()*0.3;
+    renderSessionProgress();
+  }
+}, 4000);
+
+function buildPills(){
+  const tp = document.getElementById("timePills");
+  tp.innerHTML = TIMES.map(t=>`<button class="${t===state.time?'active':''}" onclick="setTime('${t}')">${t}</button>`).join("");
+  const wp = document.getElementById("weatherPills");
+  wp.innerHTML = WEATHERS.map(w=>`<button class="${w===state.weather?'active':''}" onclick="setWeather('${w}')">${w}</button>`).join("");
+}
+function setTime(t){ state.time=t; buildPills(); renderForecast(); }
+function setWeather(w){ state.weather=w; buildPills(); renderForecast(); }
+
+function renderForecast(){
+  const ranked = rankedStations(state.time, state.weather);
+  const list = document.getElementById("stationListHome");
+  list.innerHTML = ranked.map(s=>{
+    const lv = levelInfo(s.load);
+    return `<div class="station-row">
+      <div class="load-dot" style="background:${lv.color}"></div>
+      <div class="name">${s.name}</div>
+      <div class="lvl" style="color:${lv.color}">${lv.label}</div>
+    </div>`;
+  }).join("");
+  drawSundial(ranked);
+}
+
+function drawSundial(ranked){
+  const wrap = document.getElementById("sundialSvgWrap");
+  const size = 172, cx=size/2, cy=size/2, r=68, strokeW=13;
+  const total = ranked.length;
+  const gap = 0.05;
+  const circumference = Math.PI*2 - gap*total;
+  let angle = -Math.PI/2;
+  let arcs = "";
+  ranked.forEach(s=>{
+    const share = circumference/total;
+    const lv = levelInfo(s.load);
+    const start = angle;
+    const end = angle + share*Math.max(0.35, s.load+0.3);
+    arcs += arcPath(cx,cy,r,start,end,lv.color,strokeW);
+    angle = start + share + gap;
+  });
+  const avg = ranked.reduce((a,s)=>a+s.load,0)/ranked.length;
+  wrap.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#332b25" stroke-width="${strokeW}"/>
+    ${arcs}
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" fill="#f0e8da" font-family="Fraunces" font-weight="600" font-size="22">${Math.round(avg*100)}%</text>
+    <text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#948872" font-family="Manrope" font-size="9.5">NETWORK LOAD</text>
+  </svg>`;
+}
+function arcPath(cx,cy,r,start,end,color,w){
+  const x1=cx+r*Math.cos(start), y1=cy+r*Math.sin(start);
+  const x2=cx+r*Math.cos(end), y2=cy+r*Math.sin(end);
+  const large = (end-start) > Math.PI ? 1 : 0;
+  return `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+function renderForecastMini(ranked){
+  const html = `<div class="forecast-mini">${ranked.map(s=>{
+    const lv = levelInfo(s.load);
+    return `<div class="fm-row"><div class="load-dot" style="background:${lv.color}"></div><div class="name">${s.name}</div><div class="pct" style="color:${lv.color}">${lv.label}</div></div>`;
+  }).join("")}</div>`;
+  appendRaw(html);
+}
+
+function greet(){
+  const now = new Date();
+  const h = now.getHours();
+  const word = h<12 ? "Good morning" : h<18 ? "Good afternoon" : "Good evening";
+  document.getElementById("greetLine").textContent = `${word}, Dylan`;
+  document.getElementById("dateLine").textContent = now.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'}).toUpperCase();
+}
+
+/* ============================================================
+   CHAT ENGINE
+   ============================================================ */
+let chatSeq = 0;
+
+function openChat(tab){
+  const meta = TAB_META[tab];
+  document.getElementById("chatTitle").textContent = meta.label;
+  document.getElementById("chatSub").textContent = "Talking with Sné · " + meta.sub;
+  const body = document.getElementById("chatBody");
+  body.innerHTML = "";
+  pendingAction = null;
+  chatSeq++;
+  const seq = chatSeq;
+
+  sneSay("Hey there, how may I assist you today?");
+  typingThen(()=>{
+    if(seq!==chatSeq) return;
+    sneSay("First, could you share your Charger ID or the station location you're at?");
+    typingThen(()=>{
+      if(seq!==chatSeq) return;
+      sneSay(`Thanks. What seems to be the issue with your ${meta.label.toLowerCase()}?`);
+      issueChips(TAB_CONFIG[tab].issues, tab);
+    }, 700);
+  }, 650);
+}
+
+function typingThen(cb, delay){
+  const body = document.getElementById("chatBody");
+  const t = document.createElement("div");
+  t.className = "msg sne typing";
+  t.innerHTML = `<div class="avatar" style="background:radial-gradient(circle at 32% 28%, #a9d6c8, #4fa88d 60%)"></div><div class="bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  body.appendChild(t);
+  scrollChat();
+  setTimeout(()=>{ t.remove(); cb(); }, delay);
+}
+
+function sneSay(html){
+  const body = document.getElementById("chatBody");
+  const m = document.createElement("div");
+  m.className = "msg sne";
+  m.innerHTML = `<div class="avatar" style="background:radial-gradient(circle at 32% 28%, #a9d6c8, #4fa88d 60%)"></div><div class="bubble">${html}</div>`;
+  body.appendChild(m);
+  scrollChat();
+}
+function userSay(text){
+  const body = document.getElementById("chatBody");
+  const m = document.createElement("div");
+  m.className = "msg user";
+  m.innerHTML = `<div class="avatar"></div><div class="bubble">${text}</div>`;
+  body.appendChild(m);
+  scrollChat();
+}
+function appendRaw(html){
+  document.getElementById("chatBody").insertAdjacentHTML("beforeend", html);
+  scrollChat();
+}
+function scrollChat(){
+  const body = document.getElementById("chatBody");
+  body.scrollTop = body.scrollHeight;
+}
+
+function issueChips(issues, tab){
+  const row = document.createElement("div");
+  row.className = "chip-row";
+  issues.forEach(issue=>{
+    const c = document.createElement("button");
+    c.className = "chip";
+    c.textContent = issue;
+    c.onclick = ()=>{
+      row.querySelectorAll("button").forEach(b=>b.disabled=true);
+      row.style.opacity=".45";
+      userSay(issue);
+      typingThen(()=>{ TAB_CONFIG[tab].handle(issue); }, 550);
+    };
+    row.appendChild(c);
+  });
+  document.getElementById("chatBody").appendChild(row);
+  scrollChat();
+}
+
+function actionChips(actions){
+  const row = document.createElement("div");
+  row.className = "action-row";
+  actions.forEach(a=>{
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = a.label;
+    b.onclick = ()=>{
+      row.querySelectorAll("button").forEach(x=>x.disabled=true);
+      row.style.opacity=".45";
+      userSay(a.label);
+      typingThen(a.fn, 550);
+    };
+    row.appendChild(b);
+  });
+  document.getElementById("chatBody").appendChild(row);
+  scrollChat();
+}
+
+function sendFreeText(){
+  const input = document.getElementById("chatInput");
+  const val = input.value.trim();
+  if(!val) return;
+  userSay(val);
+  input.value = "";
+  typingThen(()=>{
+    if(pendingAction==="directions"){
+      pendingAction = null;
+      sneSay(`Here's the route to <b>${val}</b> — opening Google Maps with live traffic directions.`);
+      actionChips([{label:"Open in Google Maps", fn:()=>openDirections(val)}]);
+    } else if(pendingAction==="findStation"){
+      pendingAction = null;
+      const ranked = rankedStations(state.time, state.weather);
+      sneSay(`Here are the stations nearest to ${val || "your location"}, with current load:`);
+      renderForecastMini(ranked);
+      actionChips(ranked.slice(0,3).map(s=>({label:"Directions to " + s.name, fn:()=>openDirections(s.name)})));
+    } else if(pendingAction==="freeform"){
+      pendingAction = null;
+      sneSay("Got it — I've logged that note against your case. A NitroCars specialist will follow up if anything further is needed. Anything else I can help with?");
+    } else {
+      sneSay(`Noted — "${val.length>60?val.slice(0,60)+'…':val}" has been added to this conversation. You can also pick one of the options above.`);
+    }
+  }, 600);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+greet();
+buildPills();
+renderForecast();
+updateVoucherDisplay();
+renderLiveTimer();
+renderSessionProgress();
+</script>
+</body>
+</html>
